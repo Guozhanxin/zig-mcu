@@ -1,5 +1,4 @@
-// const micro = @import("microzig");
-const mmio = @import("mmio.zig");
+const mmio = @import("../mmio.zig");
 
 pub const devices = struct {
     ///  STM32F4

@@ -5,69 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "rv32@qemu",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "zig-out\\bin\\riscv32.elf",
-            "args": [],
-            "stopAtEntry": true,
-            "cwd": "${workspaceRoot}",
-            "environment": [],
-            "externalConsole": true,
-            "miDebuggerServerAddress": "localhost:1234",
-            "serverLaunchTimeout": 2000,
-            "targetArchitecture": "arm",
-            "setupCommands": [
-                {
-                    "text": "cd ${workspaceRoot}"
-                },
-                {
-                    "text": "shell src\\riscv32\\qemu-dbg.bat"
-                }
-            ],
-            "MIMode": "gdb",
-            "miDebuggerPath": "D:\\Progrem\\riscv64-unknown-elf-toolchain-10.2.0-2020.12.8-x86_64-w64-mingw32\\bin\\riscv64-unknown-elf-gdb.exe",
-            "customLaunchSetupCommands": [],
-            "launchCompleteCommand": "exec-run",
-        },
-        {
-            "name": "f407@qemu",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "zig-out\\bin\\stm32f4.elf",
-            "args": [],
-            "stopAtEntry": true,
-            "cwd": "${workspaceRoot}",
-            "environment": [],
-            "externalConsole": true,
-            "miDebuggerServerAddress": "localhost:1234",
-            "serverLaunchTimeout": 2000,
-            "targetArchitecture": "ARM",
-            "setupCommands": [
-                {
-                    "text": "cd ${workspaceRoot}"
-                },
-                {
-                    "text": "shell src\\stm32f4\\qemu-dbg.bat"
-                }
-            ],
-            "MIMode": "gdb",
-            "miDebuggerPath": "D:\\RT-ThreadStudio\\repo\\Extract\\ToolChain_Support_Packages\\ARM\\GNU_Tools_for_ARM_Embedded_Processors\\5.4.1\\bin\\arm-none-eabi-gdb.exe",
-            "customLaunchSetupCommands": [],
-            "launchCompleteCommand": "exec-run",
-        },
-        {
             "name": "f407",
             "cwd": "${workspaceFolder}",
-            "executable": "zig-out\\bin\\stm32f4.elf",
+            "executable": "zig-out\\bin\\stm32-zboot.elf",
             "request": "launch",
             "type": "cortex-debug",
             "runToEntryPoint": "Reset_handler",
             "targetId": "stm32f407ve",
-            "cmsisPack": "D:/RT-ThreadStudio/repo/Extract/Debugger_Support_Packages/RealThread/PyOCD/0.1.3/packs/Keil.STM32F4xx_DFP.2.14.0-small.pack",
+            "cmsisPack": "Keil.STM32F4xx_DFP.2.14.0-small.pack",
             "servertype": "pyocd",
-            "armToolchainPath": "D:\\RT-ThreadStudio\\repo\\Extract\\ToolChain_Support_Packages\\ARM\\GNU_Tools_for_ARM_Embedded_Processors\\10.2.1\\bin",
-            "gdbPath": "D:\\RT-ThreadStudio\\repo\\Extract\\ToolChain_Support_Packages\\ARM\\GNU_Tools_for_ARM_Embedded_Processors\\10.2.1\\bin\\arm-none-eabi-gdb.exe",
+            "armToolchainPath": "/opt/gcc-arm-none-eabi-10-2020-q4-major/bin",
+            "gdbPath": "/opt/gcc-arm-none-eabi-10-2020-q4-major/bin/arm-none-eabi-gdb",
         },
     ]
 }

@@ -1,6 +1,5 @@
 const std = @import("std");
-// const microzig = @import("microzig");
-const cpu = @import("cortex-m.zig");
+const cpu = @import("../cortex-m.zig");
 const regs = @import("regs.zig").devices.stm32f4.peripherals;
 
 var sysfreq: u32 = 0;
@@ -27,7 +26,7 @@ pub fn clock_init() void {
     regs.RCC.PLLCFGR.modify(.{ .PLLSRC = 0, .PLLM = 8, .PLLN = 80, .PLLP = 0b00, .PLLQ = 4 });
 
     // clear clock interrupt
-    regs.RCC.CIR.raw = 0;
+    regs.RCC.CIR.write_raw(0);
 
     // Prefetch enable; Instruction cache enable; Data cache enable; Set flash latency
     regs.FLASH.ACR.modify(.{ .PRFTEN = 1, .ICEN = 1, .DCEN = 1, .LATENCY = 0b010 });
@@ -105,9 +104,9 @@ pub fn delay_us(us: u32) void {
     var current: u32 = 0;
 
     ticks = us * (sysfreq / 1000000);
-    start = cpu.peripherals.SysTick.VAL.raw;
+    start = cpu.peripherals.SysTick.VAL.read().CURRENT;
     while (true) {
-        current = cpu.peripherals.SysTick.VAL.raw;
+        current = cpu.peripherals.SysTick.VAL.read().CURRENT;
         asm volatile ("nop");
         if (start < current) {
             current = start + (0xFFFFFF - current);
