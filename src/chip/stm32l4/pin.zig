@@ -1,5 +1,5 @@
 const std = @import("std");
-const regs = @import("regs.zig").devices.stm32f4.peripherals;
+const regs = @import("regs.zig").devices.stm32l4.peripherals;
 const GPIO_Type = @import("regs.zig").types.peripherals.GPIOA;
 const RCC_Type = @import("regs.zig").types.peripherals.RCC;
 
@@ -72,9 +72,9 @@ pub fn init(name: []const u8) !PinType {
 
     // Enable PinX(A..) port
     const RCC = @as(*volatile RCC_Type, @ptrFromInt(0x40023800));
-    var ahb1enr_raw = RCC.AHB1ENR.raw;
+    var ahb1enr_raw = RCC.AHB2ENR.raw;
     ahb1enr_raw = ahb1enr_raw | std.math.shl(u32, 1, port_num);
-    RCC.AHB1ENR.raw = ahb1enr_raw;
+    RCC.AHB2ENR.raw = ahb1enr_raw;
     // Enable PinX to output
     var moder_raw: u32 = port.MODER.raw;
     // todo: optimize

@@ -1,4 +1,4 @@
-const regs = @import("regs.zig").devices.stm32f4.peripherals;
+const regs = @import("regs.zig").devices.stm32l4.peripherals;
 const cpu = @import("../cortex-m.zig");
 
 const Flash = @import("../../platform/fal/flash.zig");
@@ -24,13 +24,8 @@ pub fn flash_lock() void {
 }
 // flash_clear_status_flags
 pub fn flash_clear_status_flags() void {
-    regs.FLASH.SR.modify(.{ .PGPERR = 1, .PGSERR = 1, .WRPERR = 1, .PGAERR = 1, .EOP = 1 });
+    regs.FLASH.SR.modify(.{ .PGSERR = 1, .SIZERR = 1, .PGAERR = 1, .WRPERR = 1, .PROGERR = 1, .EOP = 1 });
 }
-
-pub const FLASH_CR_PROGRAM_X8 = 0;
-pub const FLASH_CR_PROGRAM_X16 = 1;
-pub const FLASH_CR_PROGRAM_X32 = 2;
-pub const FLASH_CR_PROGRAM_X64 = 3;
 
 pub fn flash_wait_for_last_operation() void {
     while (regs.FLASH.SR.read().BSY == 1) {
@@ -38,18 +33,13 @@ pub fn flash_wait_for_last_operation() void {
     }
 }
 
-pub fn flash_set_program_size(psize: u32) void {
-    regs.FLASH.CR.modify(.{ .PSIZE = @as(u2, @intCast(psize)) });
-}
-
-// Program an 8 bit Byte to FLASH
-pub fn flash_program_byte(address: u32, data: u8) void {
+// program an word(64 bit) to Flash
+pub fn flash_program_64(address: u32, data: u64) void {
     flash_wait_for_last_operation();
-    flash_set_program_size(FLASH_CR_PROGRAM_X8);
 
     regs.FLASH.CR.modify(.{ .PG = 1 });
 
-    const addr: *volatile u8 = @ptrFromInt(address);
+    const addr: *volatile u64 = @ptrFromInt(address);
     addr.* = data;
 
     flash_wait_for_last_operation();
@@ -57,8 +47,12 @@ pub fn flash_program_byte(address: u32, data: u8) void {
     regs.FLASH.CR.modify(.{ .PG = 0 });
 }
 
+var SECTER_PER_BANK: u32 = 1024 * 1024 / 2 / 2048; // l496 1M flash, l475 512K flash
 pub fn flash_init(self: *const Flash.Flash_Dev) Flash.FlashErr {
-    _ = self;
+    SECTER_PER_BANK = sys.zconfig.get_config().chipflash.size / self.blocks[0].size / 2;
+    if (Debug) {
+        sys.debug.print("chipflash size:0x{x}, SecterPerBank:0x{x}\r\n", .{ sys.zconfig.get_config().chipflash.size, SECTER_PER_BANK }) catch {};
+    }
     return Flash.FlashErr.Ok;
 }
 
@@ -75,7 +69,7 @@ pub fn flash_earse(self: *const Flash.Flash_Dev, addr: u32, size: u32) Flash.Fla
             _ = i;
 
             if (Debug) {
-                sys.debug.print("addr:{x}, cur_block:{x}\r\n", .{ addr, secter_cur }) catch {};
+                sys.debug.print("addr_cur:0x{x}, cur_block:0x{x}\r\n", .{ addr_cur, secter_cur }) catch {};
             }
             if (is_find == false) {
                 if (addr >= addr_cur and addr < addr_cur + b.size) {
@@ -91,15 +85,38 @@ pub fn flash_earse(self: *const Flash.Flash_Dev, addr: u32, size: u32) Flash.Fla
             }
 
             if (addr < addr_cur + b.size) {
-                if (Debug) {
-                    sys.debug.print("chip erase secter_cur:{x}\r\n", .{secter_cur}) catch {};
-                }
+                var bank: u8 = 1;
+                var pgn = secter_cur;
+
                 // Erase the block
                 flash_wait_for_last_operation();
-                regs.FLASH.CR.modify(.{ .SER = 1, .SNB = @as(u4, @intCast(secter_cur)) });
-                regs.FLASH.CR.modify(.{ .STRT = 1 });
+                if (regs.FLASH.OPTR.read().DUALBANK == 0) {
+                    regs.FLASH.CR.modify(.{ .BKER = 0 });
+                } else {
+                    if (secter_cur < SECTER_PER_BANK) {
+                        regs.FLASH.CR.modify(.{ .BKER = 0 });
+                    } else {
+                        regs.FLASH.CR.modify(.{ .BKER = 1 });
+                        bank = 2;
+                        pgn -= SECTER_PER_BANK;
+                    }
+                }
+                if (Debug) {
+                    sys.debug.print("chip erase bank:{d},secter_cur:{x}\r\n", .{ bank, pgn }) catch {};
+                }
+                regs.FLASH.CR.modify(.{ .PER = 1, .PNB = @as(u8, @intCast(pgn)) });
+                regs.FLASH.CR.modify(.{ .START = 1 });
                 flash_wait_for_last_operation();
-                regs.FLASH.CR.modify(.{ .SER = 0, .SNB = 0 });
+                regs.FLASH.CR.modify(.{ .PER = 0, .PNB = 0 });
+                if (Debug) {
+                    for (addr_cur..addr_cur + b.size) |check_d| {
+                        const d = @as(*u8, @ptrFromInt(check_d)).*;
+                        if (d != 0xFF) {
+                            sys.debug.print("erase failed, data check error\r\n", .{}) catch {};
+                            break;
+                        }
+                    }
+                }
             }
             if (addr_cur + b.size >= addr + size) {
                 break true;
@@ -118,15 +135,25 @@ pub fn flash_earse(self: *const Flash.Flash_Dev, addr: u32, size: u32) Flash.Fla
 }
 pub fn flash_write(self: *const Flash.Flash_Dev, addr: u32, data: []const u8) Flash.FlashErr {
     _ = self;
+    var ret = Flash.FlashErr.Ok;
     flash_unlock();
     flash_clear_status_flags();
 
-    for (data, 0..) |d, i| {
-        flash_program_byte(addr + i, d);
+    var i: u32 = 0;
+    while (i < data.len) : (i += 8) {
+        const data64 = @as(*const volatile u64, @ptrCast(@alignCast(&data[i]))).*;
+        flash_program_64(addr + i, data64);
+
+        const addr64: *const volatile u64 = @ptrFromInt(addr + i);
+        if (addr64.* != data64) {
+            sys.debug.print("write failed, data check error!\r\n", .{}) catch {};
+            ret = Flash.FlashErr.ErrWrite;
+            break;
+        }
     }
 
     flash_lock();
-    return Flash.FlashErr.Ok;
+    return ret;
 }
 pub fn flash_read(self: *const Flash.Flash_Dev, addr: u32, data: []u8) Flash.FlashErr {
     _ = self;
@@ -150,12 +177,12 @@ pub const chip_flash: Flash.Flash_Dev = .{
     .start = 0x08000000,
     .len = 0x100000,
     .blocks = .{
-        .{ .size = 0x4000, .count = 4 },
-        .{ .size = 0x10000, .count = 1 },
-        .{ .size = 0x20000, .count = 7 },
-        .{ .size = 0x4000, .count = 4 },
-        .{ .size = 0x10000, .count = 1 },
-        .{ .size = 0x20000, .count = 7 },
+        .{ .size = 0x800, .count = 512 },
+        .{ .size = 0, .count = 0 },
+        .{ .size = 0, .count = 0 },
+        .{ .size = 0, .count = 0 },
+        .{ .size = 0, .count = 0 },
+        .{ .size = 0, .count = 0 },
     },
     .write_size = 8,
     .ops = &ops,

@@ -38,5 +38,8 @@ pub const PinType = struct {
 pub fn Pin(name: []const u8) !PinType {
     if (@import("../hal/hal.zig").chip_series == @import("../hal/hal.zig").ChipSeriseType.STM32F4) {
         return @import("../chip/stm32f4/pin.zig").init(name);
+    } else if (@import("../hal/hal.zig").chip_series == @import("../hal/hal.zig").ChipSeriseType.STM32L4) {
+        return @import("../chip/stm32l4/pin.zig").init(name);
     }
+    return error.InvalidChipSeries;
 }

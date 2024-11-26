@@ -20,6 +20,11 @@ pub fn init() void {
 
         clock.init();
         sysfreq = clock.get_sysfreq();
+    } else if (@import("../hal/hal.zig").chip_series == @import("../hal/hal.zig").ChipSeriseType.STM32L4) {
+        clock = @import("../chip/stm32l4/clock.zig").clock;
+
+        clock.init();
+        sysfreq = clock.get_sysfreq();
     }
 }
 

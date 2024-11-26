@@ -9,6 +9,7 @@ const mem = @import("std").mem;
 
 pub const ChipSeriseType = enum {
     STM32F4,
+    STM32L4,
 };
 
 pub var chip_series: ChipSeriseType = ChipSeriseType.STM32F4;
@@ -16,6 +17,8 @@ pub var chip_series: ChipSeriseType = ChipSeriseType.STM32F4;
 pub fn init(series: []const u8) void {
     if (mem.eql(u8, series[0..], "F4")) {
         chip_series = ChipSeriseType.STM32F4;
+    } else if (mem.eql(u8, series[0..], "L4")) {
+        chip_series = ChipSeriseType.STM32L4;
     }
     clock.init();
     flash.init();
