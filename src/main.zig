@@ -51,7 +51,6 @@ export fn main() noreturn {
     sys.zconfig.probe_extconfig(sys.get_rom_end());
     const zboot_config = sys.zconfig.get_config();
     hal.init(zboot_config.chipseries.name[0..]);
-    hal.clock.init();
     if (zboot_config.uart.enable) {
         sys.init_debug(zboot_config.uart.tx[0..]) catch {};
         show_logo();
