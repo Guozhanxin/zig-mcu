@@ -8,7 +8,7 @@ const stm32f4 = std.zig.CrossTarget{
 };
 
 pub fn build(b: *std.Build) void {
-    const optimize = .ReleaseSafe;
+    const optimize = .ReleaseSmall;
     const target_name = "stm32-zboot";
 
     const elf = b.addExecutable(.{
