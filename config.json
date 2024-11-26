@@ -1,4 +1,7 @@
     {
+        "chipseries":{
+            "name":"F4"
+        },
         "chipflash":{
             "size": 1024
         },
