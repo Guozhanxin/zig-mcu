@@ -10,5 +10,7 @@ pub fn init() void {
         chip_flash = @import("../chip/stm32f4/flash.zig").chip_flash;
     } else if (@import("../hal/hal.zig").chip_series == @import("../hal/hal.zig").ChipSeriseType.STM32L4) {
         chip_flash = @import("../chip/stm32l4/flash.zig").chip_flash;
+    } else if (@import("../hal/hal.zig").chip_series == @import("../hal/hal.zig").ChipSeriseType.STM32H7) {
+        chip_flash = @import("../chip/stm32h7/flash.zig").chip_flash;
     }
 }
