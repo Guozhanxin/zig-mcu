@@ -107,7 +107,6 @@ pub fn delay_us(us: u32) void {
     start = cpu.peripherals.SysTick.VAL.read().CURRENT;
     while (true) {
         current = cpu.peripherals.SysTick.VAL.read().CURRENT;
-        asm volatile ("nop");
         if (start < current) {
             current = start + (0xFFFFFF - current);
         } else {

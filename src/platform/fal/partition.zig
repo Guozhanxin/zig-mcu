@@ -32,7 +32,7 @@ comptime {
     const export_opts = .{
         .name = "default_partition",
         .section = "fal",
-        .linkage = .Strong,
+        .linkage = .strong,
     };
     @export(dconfig.default_partition, export_opts);
 }

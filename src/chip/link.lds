@@ -17,8 +17,9 @@ SECTIONS
 {
   .text :
   {
-    KEEP(*(microzig_flash_start))
+      KEEP(*(microzig_flash_start))
      *(.text*)
+     KEEP(*(fal))
   } > flash0
 
   .ARM.exidx : {
@@ -40,7 +41,7 @@ SECTIONS
       microzig_bss_end = .;
       . = ALIGN(4);
       microzig_stack_start = .;
-      . = . + 0x800;
+      . = . + 0x8000;
       . = ALIGN(4);
       microzig_stack_end = .;
   } > ram0

@@ -46,4 +46,13 @@ pub fn build(b: *std.Build) void {
         b.fmt("{s}{s}", .{ target_name, ".bin" }),
     );
     b.default_step.dependOn(&copy_bin.step);
+
+    const zboot_tool = b.addExecutable(.{
+        .name = "zboot",
+        .optimize = .ReleaseSmall,
+        .target = b.host,
+        .root_source_file = b.path("src/zboot.zig"),
+    });
+
+    b.installArtifact(zboot_tool);
 }
