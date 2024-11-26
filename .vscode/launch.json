@@ -17,5 +17,18 @@
             "armToolchainPath": "/opt/gcc-arm-none-eabi-10-2020-q4-major/bin",
             "gdbPath": "/opt/gcc-arm-none-eabi-10-2020-q4-major/bin/arm-none-eabi-gdb",
         },
+        {
+            "name": "f407-app",
+            "cwd": "${workspaceFolder}",
+            "executable": "zig-out\\bin\\stm32-app.elf",
+            "request": "launch",
+            "type": "cortex-debug",
+            "runToEntryPoint": "Reset_handler",
+            "targetId": "stm32f407ve",
+            "cmsisPack": "Keil.STM32F4xx_DFP.2.14.0-small.pack",
+            "servertype": "pyocd",
+            "armToolchainPath": "/opt/gcc-arm-none-eabi-10-2020-q4-major/bin",
+            "gdbPath": "/opt/gcc-arm-none-eabi-10-2020-q4-major/bin/arm-none-eabi-gdb",
+        },
     ]
 }
