@@ -2,7 +2,7 @@ const hal = @import("hal/hal.zig");
 const sys = @import("platform/sys.zig");
 
 export fn main() noreturn {
-    hal.clock.clock_init();
+    hal.clock.init();
     sys.zconfig.probe_extconfig(sys.get_rom_end());
     const zboot_config = sys.zconfig.get_config();
     if (zboot_config.uart.enable) {

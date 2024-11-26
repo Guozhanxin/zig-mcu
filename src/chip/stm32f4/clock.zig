@@ -2,8 +2,6 @@ const std = @import("std");
 const cpu = @import("../cortex-m.zig");
 const regs = @import("regs.zig").devices.stm32f4.peripherals;
 
-var sysfreq: u32 = 0;
-
 pub fn clock_init() void {
 
     // Enable power interface clock
@@ -43,7 +41,6 @@ pub fn clock_init() void {
         asm volatile ("nop");
     }
 
-    sysfreq = get_sysfreq();
     // init systick
     cpu.peripherals.SysTick.LOAD.raw = 0xFFFFFF;
     cpu.peripherals.SysTick.CTRL.modify(.{ .ENABLE = 1, .CLKSOURCE = 1 });
@@ -89,31 +86,8 @@ pub fn get_sysfreq() u32 {
     return sysclockfreq;
 }
 
-// delay_ms
-pub fn delay_ms(ms: u32) void {
-    for (0..ms) |i| {
-        _ = i;
-        delay_us(1000);
-    }
-}
-
-// delay us
-pub fn delay_us(us: u32) void {
-    var ticks: u32 = 0;
-    var start: u32 = 0;
-    var current: u32 = 0;
-
-    ticks = us * (sysfreq / 1000000);
-    start = cpu.peripherals.SysTick.VAL.read().CURRENT;
-    while (true) {
-        current = cpu.peripherals.SysTick.VAL.read().CURRENT;
-        if (start < current) {
-            current = start + (0xFFFFFF - current);
-        } else {
-            current = start - current;
-        }
-        if (current > ticks) {
-            break;
-        }
-    }
-}
+pub const clock = .{
+    .init = &clock_init,
+    .deinit = &clock_deinit,
+    .get_sysfreq = &get_sysfreq,
+};

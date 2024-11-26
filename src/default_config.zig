@@ -6,6 +6,9 @@ const KiB = 1024;
 // default config
 pub var default_config = zconfig.ZbootConfig{
     .magic = zconfig.ZBOOT_CONFIG_MAGIC,
+    .chipseries = zconfig.ChipSeriesConfig{
+        .name = .{ 'F', '4', 0, 0, 0, 0, 0, 0 },
+    },
     .chipflash = .{
         .size = 1024 * KiB,
     },

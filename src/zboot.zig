@@ -14,6 +14,11 @@ const Part = @import("platform/fal/fal.zig").partition;
 pub var partition_num: u32 = 0;
 pub var default_partition: [Part.partition_table_MAX]Part.Partition = undefined;
 pub var default_zconfig: ZC.ZbootConfig = undefined;
+
+const JsonChipSeries = struct {
+    name: []u8,
+};
+
 const JsonChipFlash = struct {
     size: u32,
 };
@@ -44,6 +49,7 @@ const JsonPartitionTable = struct {
 };
 
 const JsonConfig = struct {
+    chipseries: JsonChipSeries,
     chipflash: JsonChipFlash,
     uart: JsonUart,
     spiflash: JsonSpiFlash,
@@ -156,6 +162,12 @@ pub fn json_parse() !void {
     const root = try std.json.parseFromSlice(JsonConfig, allocator, buf[0..size], .{ .allocate = .alloc_always });
 
     const json_config = root.value;
+    // parse chipseries config
+    if (Debug) {
+        std.debug.print("chipseries name:{s}\n", .{json_config.chipseries.name});
+    }
+    mem.copyForwards(u8, &default_zconfig.chipseries.name, json_config.chipseries.name[0..json_config.chipseries.name.len]);
+
     // parse chipflash config
     if (Debug) {
         std.debug.print("chipflash size:{d}\n", .{json_config.chipflash.size});

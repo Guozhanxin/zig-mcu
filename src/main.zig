@@ -43,14 +43,15 @@ pub fn jump_app() void {
 
     // sys.debug.print("jump to app, offset:0x{x}, addr:0x{x}\r\n", .{ APP_ENTRY_ADDR, jump_addr }) catch {};
 
-    hal.clock.clock_deinit();
+    hal.clock.deinit();
     jump2app();
 }
 
 export fn main() noreturn {
-    hal.clock.clock_init();
     sys.zconfig.probe_extconfig(sys.get_rom_end());
     const zboot_config = sys.zconfig.get_config();
+    hal.init(zboot_config.chipseries.name[0..]);
+    hal.clock.init();
     if (zboot_config.uart.enable) {
         sys.init_debug(zboot_config.uart.tx[0..]) catch {};
         show_logo();
